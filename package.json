@@ -1,0 +1,19 @@
+{
+  "name": "melanzana-appointment-scraper",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Michael Quattrochi <mquattrochi@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "@slack/webhook": "^7.0.4",
+    "axios": "^1.7.9",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.7"
+  }
+}
