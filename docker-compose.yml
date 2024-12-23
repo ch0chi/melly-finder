@@ -1,6 +1,6 @@
 services:
-  casa_bonita_booking_finder:
-    container_name: casa_bonita_booking_finder
+  melly_finder:
+    container_name: melly_finder
     build:
       context: .
       dockerfile: Dockerfile
