@@ -1,8 +1,9 @@
 FROM node:latest
 
-RUN mkdir -p /usr/src/app/
-WORKDIR /usr/src/app/
-COPY ./src /usr/src/app/
+RUN mkdir -p /usr/app/
+WORKDIR /usr/app/
+COPY ./src /usr/app/
+COPY package*.json ./
 
 ENV PATH /app/node_modules/.bin:$PATH
 
