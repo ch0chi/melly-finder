@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import axios from "axios";
-import {Store} from "./store.js";
+import {Store} from "./store/store.js";
 
 export class MellyFinder {
     url = 'https://melanzana.com/wp-admin/admin-ajax.php';
@@ -65,6 +65,8 @@ export class MellyFinder {
 
             this.updateNonceTries();
             await this.fetchNonce();
+            console.log("Retrying fetchMonthlyAppointments...");
+            return await this.fetchMonthlyAppointments(month);
         }
 
         let appointments = [];
@@ -78,7 +80,7 @@ export class MellyFinder {
                 appointments.push({date:date, slots:available});
             }
         }
-        return appointments;
+        return await this.getAvailableAppointments(appointments);
     }
 
     async fetchDailySlots(date) {
@@ -129,6 +131,8 @@ export class MellyFinder {
         const slotText = $('.booked-appt-list').find('p').text();
         return !(slotText && slotText.includes('There are no appointment time slots available for this day.'));
     }
+
+
 }
 
 

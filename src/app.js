@@ -2,9 +2,10 @@ import {MellyFinder} from "./MellyFinder.js";
 import dotenv from 'dotenv';
 dotenv.config();
 import {IncomingWebhook} from "@slack/webhook";
-
+import {AvailableStore} from "./store/availableStore.js";
 
 const mellyFinder = new MellyFinder();
+const availableStore = new AvailableStore();
 
 let slackWebhook = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL);
 let intervalTime = process.env.FETCH_INTERVAL;
@@ -18,6 +19,7 @@ const getMonth = () => {
     }
     return month.toString();
 }
+
 
 const notifySlack = async (message,important = false) => {
     let text = `${message}`;
@@ -45,35 +47,32 @@ const stop = () => {
 const init = async () => {
     console.log("Starting...");
     console.log(`Fetch Interval set to ${getIntervalTime()} minutes`);
-    let nonce = await mellyFinder.getNonce();
-    if(nonce === null){
-        let fetched = await mellyFinder.fetchNonce();
-        if(fetched === null) {
-            await notifySlack(`There was an error fetching the nonce and the app has quit running`,true);
-        }
-    }
+
 
     //check for appointments immediately
-    let appointments = await mellyFinder.fetchMonthlyAppointments(getMonth());
-    let available = await mellyFinder.getAvailableAppointments(appointments);
+    let available = await mellyFinder.fetchMonthlyAppointments(getMonth());
+    await availableStore.init();
 
-    if(available.length > 0) {
+    if(await availableStore.shouldNotify(available)) {
+        console.log(`Found available booking dates!`);
         let msg = "";
         for(let slot of available) {
             msg += `\n${slot}\n`;
         }
         await notifySlack(`${msg}`,true);
+    } else {
+        await notifySlack("No available booking dates found. Don't worry! The finder will notify you as soon as new appointments have been found.");
     }
 
     syncInterval = setInterval(async () => {
-        let appointments = await mellyFinder.fetchMonthlyAppointments(getMonth());
-        let available = await mellyFinder.getAvailableAppointments(appointments);
-
-        if(available.length > 0) {
+        let available = await mellyFinder.fetchMonthlyAppointments(getMonth());
+        if(await availableStore.shouldNotify(available)) {
+            console.log(`Found available booking dates!`);
             let msg = "";
             for(let slot of available) {
                 msg += `${slot}\n`;
             }
+
             await notifySlack(`\n${msg}`,true);
         }
 
@@ -81,9 +80,11 @@ const init = async () => {
         totalIntervalCount++;
 
         if(intervalCount === 12) {
+            let lastAvailable = availableStore.getLastAvailable();
             await notifySlack(
                 `Finder still running and no new booking dates have been found.
-                There have been ${totalIntervalCount} booking date checks since starting.`
+                There have been ${totalIntervalCount} booking date checks since starting.
+                These are the last available booking dates found: ${lastAvailable}`
             )
             intervalCount = 0;
         }
