@@ -63,7 +63,7 @@ const init = async () => {
     } else {
         await notifySlack("No available booking dates found. Don't worry! The finder will notify you as soon as new appointments have been found.");
     }
-    await this.setLastAvailable(available);
+    await availableStore.setLastAvailable(available);
 
     syncInterval = setInterval(async () => {
         let available = await mellyFinder.fetchMonthlyAppointments(getMonth());
@@ -75,7 +75,7 @@ const init = async () => {
             }
             await notifySlack(`\n${msg}`,true);
         }
-        await this.setLastAvailable(available);
+        await availableStore.setLastAvailable(available);
 
         intervalCount++;
         totalIntervalCount++;
