@@ -16,6 +16,7 @@ export class Store {
             if(err.code === 'ENOENT') {
                 try {
                     await writeFile(this.filePath,'{}');
+                    return {};
                 } catch (err) {
                     console.log(err);
                 }
@@ -26,7 +27,7 @@ export class Store {
     async getEntry(key) {
         try {
             let data = await this.getStore();
-            if(data[key]){
+            if(key in data){
                 return data[key];
             } else {
                 return null;
