@@ -1,9 +1,25 @@
-import {readFile,writeFile,truncate} from 'fs/promises';
+import {readFile,writeFile,truncate,mkdir} from 'fs/promises';
 import {resolve} from 'node:path';
 
 export class Store {
 
     filePath = resolve('./cache/store.json');
+
+    async createStore() {
+        let cachePath = resolve('./cache');
+        try {
+            await writeFile(this.filePath,'{}');
+        } catch(err) {
+            if (err.code === 'ENOENT') {
+                try {
+                    await mkdir(cachePath);
+                    await writeFile(this.filePath, '{}');
+                } catch (err) {
+                    console.log(err);
+                }
+            }
+        }
+    }
 
     async getStore() {
         try{
@@ -15,11 +31,13 @@ export class Store {
         } catch (err) {
             if(err.code === 'ENOENT') {
                 try {
-                    await writeFile(this.filePath,'{}');
+                    await this.createStore();
                     return {};
                 } catch (err) {
                     console.log(err);
                 }
+            } else {
+                console.log(err);
             }
         }
     }
