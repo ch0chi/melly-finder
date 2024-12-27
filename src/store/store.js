@@ -3,7 +3,7 @@ import {resolve} from 'node:path';
 
 export class Store {
 
-    filePath = resolve('./store.json');
+    filePath = resolve('./cache/store.json');
 
     async getStore() {
         try{
