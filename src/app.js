@@ -1,4 +1,4 @@
-import {MellyFinder} from "./MellyFinder.js";
+import {MellyFinder} from "./mellyFinder.js";
 import dotenv from 'dotenv';
 dotenv.config();
 import {IncomingWebhook} from "@slack/webhook";
@@ -53,7 +53,7 @@ const init = async () => {
     let available = await mellyFinder.fetchMonthlyAppointments(getMonth());
     await availableStore.init();
 
-    if(await availableStore.shouldNotify(available)) {
+    if(availableStore.shouldNotify(available)) {
         console.log(`Found available booking dates!`);
         let msg = "";
         for(let slot of available) {
@@ -63,18 +63,19 @@ const init = async () => {
     } else {
         await notifySlack("No available booking dates found. Don't worry! The finder will notify you as soon as new appointments have been found.");
     }
+    await this.setLastAvailable(available);
 
     syncInterval = setInterval(async () => {
         let available = await mellyFinder.fetchMonthlyAppointments(getMonth());
-        if(await availableStore.shouldNotify(available)) {
+        if(availableStore.shouldNotify(available)) {
             console.log(`Found available booking dates!`);
             let msg = "";
             for(let slot of available) {
                 msg += `${slot}\n`;
             }
-
             await notifySlack(`\n${msg}`,true);
         }
+        await this.setLastAvailable(available);
 
         intervalCount++;
         totalIntervalCount++;

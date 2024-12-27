@@ -26,7 +26,7 @@ export class AvailableStore {
         return this.lastAvailable;
     }
 
-    async shouldNotify(newAppointments) {
+    shouldNotify(newAppointments) {
 
         if(this.lastAvailable === newAppointments) {
             return false;
@@ -44,15 +44,10 @@ export class AvailableStore {
             let diff = newAppointments.filter((slot) => {
                 return !this.lastAvailable.includes(slot);
             });
-            if(diff.length > 0) {
-                await this.setLastAvailable(newAppointments);
-                return true;
-            }
-            return false;
+            return diff.length > 0;
         }
 
         if(this.lastAvailable.length === 0 && newAppointments.length > 0){
-            await this.setLastAvailable(newAppointments);
             return true;
         }
     }
