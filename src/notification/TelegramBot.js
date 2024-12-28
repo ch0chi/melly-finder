@@ -7,6 +7,7 @@ export class TelegramBot {
     bot;
     chatId;
     availableStore;
+    stats = {};
 
     constructor() {
         this.bot = new Bot(process.env.TELEGRAM_BOT_TOKEN);
@@ -24,6 +25,14 @@ export class TelegramBot {
         this.commands();
     }
 
+    setStats(stats) {
+        this.stats = stats;
+    }
+
+    getStats() {
+        return this.stats;
+    }
+
     commands(){
         this.bot.command('appointments', async(ctx) => {
             let lastAvailable = await this.availableStore.getLastAvailable();
@@ -39,7 +48,12 @@ export class TelegramBot {
 
         //todo
         this.bot.command('runs', async(ctx) => {
-            await ctx.reply('10 runs');
+            let stats = this.getStats();
+            let msg = "";
+            for(let stat in stats) {
+                msg += `${stat}\n`;
+            }
+            await ctx.reply(`Current Stats: \n ${msg}`);
         })
     }
 

@@ -66,6 +66,7 @@ const init = async () => {
 
         intervalCount++;
         totalIntervalCount++;
+        telegramBot.setStats({status:'running',totalChecks:totalIntervalCount});
 
         if (intervalCount === 12) {
             let lastAvailable = availableStore.getLastAvailable();
