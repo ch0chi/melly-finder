@@ -64,19 +64,19 @@ const init = async () => {
         }
         await availableStore.setLastAvailable(available);
 
-        intervalCount++;
+       // intervalCount++;
         totalIntervalCount++;
         telegramBot.setStats({status:'running',totalChecks:totalIntervalCount});
 
-        if (intervalCount === 12) {
-            let lastAvailable = availableStore.getLastAvailable();
-            await telegramBot.sendMessage(
-                `Finder still running and no new booking dates have been found.
-                There have been ${totalIntervalCount} booking date checks since starting.
-                These are the last available booking dates found: ${lastAvailable}`
-            )
-            intervalCount = 0;
-        }
+       // if (intervalCount === 12) {
+         //   let lastAvailable = availableStore.getLastAvailable();
+          //  await telegramBot.sendMessage(
+             //   `Finder still running and no new booking dates have been found.
+              //  There have been ${totalIntervalCount} booking date checks since starting.
+              //  These are the last available booking dates found: ${lastAvailable}`
+           // )
+         //   intervalCount = 0;
+       // }
     }, parseInt(getIntervalTime()) * 60000);
 }
 

@@ -53,7 +53,7 @@ export class TelegramBot {
             for(let key in stats) {
                 msg += `${key}: ${stats[key]}\n`;
             }
-            await ctx.reply(`Current Stats: \n ${msg}`);
+            await ctx.reply(`Current Stats:\n${msg}`);
         })
     }
 
