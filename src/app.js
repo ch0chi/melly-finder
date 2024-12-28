@@ -39,7 +39,6 @@ const init = async () => {
     console.log(`Fetch Interval set to ${getIntervalTime()} minutes`);
     await telegramBot.init();
 
-
     //check for appointments immediately
     let available = await mellyFinder.fetchMonthlyAppointments(getMonth());
     await availableStore.init();
@@ -84,6 +83,7 @@ await telegramBot.sendMessage(`Started Melly Finder!`, true);
 
 let intervalCount = 0;
 let totalIntervalCount = 0;
+telegramBot.setStats({status:'running',totalChecks:totalIntervalCount});
 
 await init()
     .catch(async (err) => {
