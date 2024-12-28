@@ -50,8 +50,8 @@ export class TelegramBot {
         this.bot.command('stats', async(ctx) => {
             let stats = this.getStats();
             let msg = "";
-            for(let stat in stats) {
-                msg += `${stat}\n`;
+            for(let key in stats) {
+                msg += `${key}: ${stats[key]}\n`;
             }
             await ctx.reply(`Current Stats: \n ${msg}`);
         })
