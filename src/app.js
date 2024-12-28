@@ -1,34 +1,24 @@
 import {MellyFinder} from "./mellyFinder.js";
 import dotenv from 'dotenv';
+
 dotenv.config();
-import {IncomingWebhook} from "@slack/webhook";
 import {AvailableStore} from "./store/availableStore.js";
+import {TelegramBot} from "./notification/TelegramBot.js";
 
 const mellyFinder = new MellyFinder();
 const availableStore = new AvailableStore();
+const telegramBot = new TelegramBot();
 
-let slackWebhook = new IncomingWebhook(process.env.SLACK_WEBHOOK_URL);
 let intervalTime = process.env.FETCH_INTERVAL;
 let syncInterval;
 
 const getMonth = () => {
     let month = process.env.MONTH;
-    if(!month) {
+    if (!month) {
         const date = new Date();
-        return`${date.getFullYear()}-${date.getMonth()+1}-01}`;
+        return `${date.getFullYear()}-${date.getMonth() + 1}-01}`;
     }
     return month.toString();
-}
-
-
-const notifySlack = async (message,important = false) => {
-    let text = `${message}`;
-    if(important) {
-        text = `<!channel> ${message}`;
-    }
-    await slackWebhook.send({
-        "text": `${text}`
-    })
 }
 
 const setIntervalTime = (time) => {
@@ -47,60 +37,57 @@ const stop = () => {
 const init = async () => {
     console.log("Starting...");
     console.log(`Fetch Interval set to ${getIntervalTime()} minutes`);
+    await telegramBot.init();
 
 
     //check for appointments immediately
     let available = await mellyFinder.fetchMonthlyAppointments(getMonth());
     await availableStore.init();
 
-    if(availableStore.shouldNotify(available)) {
+    if (available.length > 0) {
         console.log(`Found available booking dates!`);
-        let msg = "";
-        for(let slot of available) {
-            msg += `\n${slot}\n`;
-        }
-        await notifySlack(`${msg}`,true);
+        await telegramBot.sendMessage(telegramBot.formatMsg(available));
+
     } else {
-        await notifySlack("No available booking dates found. Don't worry! The finder will notify you as soon as new appointments have been found.");
+        await telegramBot.sendMessage("No available appointments found." +
+            "I'll let you know as soon as I find something.")
     }
     await availableStore.setLastAvailable(available);
 
     syncInterval = setInterval(async () => {
+
         let available = await mellyFinder.fetchMonthlyAppointments(getMonth());
-        if(availableStore.shouldNotify(available)) {
+
+        if (telegramBot.shouldNotify(available)) {
             console.log(`Found available booking dates!`);
-            let msg = "";
-            for(let slot of available) {
-                msg += `${slot}\n`;
-            }
-            await notifySlack(`\n${msg}`,true);
+            await telegramBot.sendMessage(telegramBot.formatMsg(available));
         }
         await availableStore.setLastAvailable(available);
 
         intervalCount++;
         totalIntervalCount++;
 
-        if(intervalCount === 12) {
+        if (intervalCount === 12) {
             let lastAvailable = availableStore.getLastAvailable();
-            await notifySlack(
+            await telegramBot.sendMessage(
                 `Finder still running and no new booking dates have been found.
                 There have been ${totalIntervalCount} booking date checks since starting.
                 These are the last available booking dates found: ${lastAvailable}`
             )
             intervalCount = 0;
         }
-    },parseInt(getIntervalTime())*60000);
+    }, parseInt(getIntervalTime()) * 60000);
 }
 
-await notifySlack(`Started Melly Finder!`, true);
+await telegramBot.sendMessage(`Started Melly Finder!`, true);
 
 let intervalCount = 0;
 let totalIntervalCount = 0;
 
 await init()
-.catch(async (err) => {
-    console.log(err);
-    await notifySlack( `There was an error fetching booking dates and the app has quit running. Error :${err}`,
-        true)
-    stop();
-});
+    .catch(async (err) => {
+        console.log(err);
+        await telegramBot.sendMessage(`There was an error fetching booking dates and the app has quit running. Error :${err}`,
+            true)
+        stop();
+    });
