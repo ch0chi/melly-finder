@@ -32,7 +32,7 @@ export class TelegramBot {
                 msg = `Here are all the available appointments from the last check:\n${this.formatMsg(lastAvailable)}`;
                 await ctx.reply(msg);
             } else {
-                await ctx.reply("No available appointments found." +
+                await ctx.reply("No available appointments found. " +
                     "I'll let you know as soon as I find something.");
             }
         });

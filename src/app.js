@@ -49,7 +49,7 @@ const init = async () => {
         await telegramBot.sendMessage(telegramBot.formatMsg(available));
 
     } else {
-        await telegramBot.sendMessage("No available appointments found." +
+        await telegramBot.sendMessage("No available appointments found. " +
             "I'll let you know as soon as I find something.")
     }
     await availableStore.setLastAvailable(available);
