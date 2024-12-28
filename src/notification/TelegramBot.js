@@ -47,7 +47,7 @@ export class TelegramBot {
         });
 
         //todo
-        this.bot.command('runs', async(ctx) => {
+        this.bot.command('stats', async(ctx) => {
             let stats = this.getStats();
             let msg = "";
             for(let stat in stats) {
