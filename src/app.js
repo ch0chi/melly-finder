@@ -16,7 +16,7 @@ const getMonth = () => {
     let month = process.env.MONTH;
     if (!month) {
         const date = new Date();
-        return `${date.getFullYear()}-${date.getMonth() + 1}-01}`;
+        return `${date.getFullYear()}-${date.getMonth() + 1}-01`;
     }
     return month.toString();
 }
@@ -38,7 +38,7 @@ const init = async () => {
     console.log("Starting...");
     console.log(`Fetch Interval set to ${getIntervalTime()} minutes`);
     await telegramBot.init();
-    telegramBot.setStats({status:'running',totalChecks:0});
+    telegramBot.setStats({status:'running',totalChecks:0,month:getMonth()});
 
     //check for appointments immediately
     let available = await mellyFinder.fetchMonthlyAppointments(getMonth());
@@ -57,38 +57,26 @@ const init = async () => {
     syncInterval = setInterval(async () => {
 
         let available = await mellyFinder.fetchMonthlyAppointments(getMonth());
-
-        if (telegramBot.shouldNotify(available)) {
+        let shouldNotify = await telegramBot.shouldNotify(available);
+        if (shouldNotify) {
             console.log(`Found available booking dates!`);
             await telegramBot.sendMessage(telegramBot.formatMsg(available));
         }
         await availableStore.setLastAvailable(available);
 
-       // intervalCount++;
         totalIntervalCount++;
-        telegramBot.setStats({status:'running',totalChecks:totalIntervalCount});
+        telegramBot.setStats({status:'running',totalChecks:totalIntervalCount,month:getMonth()});
 
-       // if (intervalCount === 12) {
-         //   let lastAvailable = availableStore.getLastAvailable();
-          //  await telegramBot.sendMessage(
-             //   `Finder still running and no new booking dates have been found.
-              //  There have been ${totalIntervalCount} booking date checks since starting.
-              //  These are the last available booking dates found: ${lastAvailable}`
-           // )
-         //   intervalCount = 0;
-       // }
     }, parseInt(getIntervalTime()) * 60000);
 }
 
-await telegramBot.sendMessage(`Started Melly Finder!`, true);
+await telegramBot.sendMessage(`Started Melly Finder!`);
 
-let intervalCount = 0;
 let totalIntervalCount = 0;
 
 await init()
     .catch(async (err) => {
         console.log(err);
-        await telegramBot.sendMessage(`There was an error fetching booking dates and the app has quit running. Error :${err}`,
-            true)
+        await telegramBot.sendMessage(`There was an error fetching booking dates and the app has quit running. Error :${err}`);
         stop();
     });

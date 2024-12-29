@@ -46,7 +46,6 @@ export class TelegramBot {
             }
         });
 
-        //todo
         this.bot.command('stats', async(ctx) => {
             let stats = this.getStats();
             let msg = "";
@@ -54,7 +53,23 @@ export class TelegramBot {
                 msg += `${key}: ${stats[key]}\n`;
             }
             await ctx.reply(`Current Stats:\n${msg}`);
-        })
+        });
+
+        this.bot.command('changeMonth', async(ctx) => {
+            let month = ctx.message.text.split(' ')[1];
+            if(month) {
+                process.env.MONTH = month;
+                let currentStats = this.getStats();
+                currentStats.month = month;
+                this.setStats(currentStats);
+                await this.availableStore.setLastAvailable([]);
+                let msg = "Month set to " + month + "." + " I'll start checking for appointments for that month, and I will notify you if I find any.\n\n" +
+                    "You can always check the available appointments by typing /appointments";
+                await ctx.reply(msg);
+            } else {
+                await ctx.reply("Please enter a valid month");
+            }
+        });
     }
 
     async sendMessage(msg) {
@@ -72,14 +87,8 @@ export class TelegramBot {
         return msg;
     }
 
-    shouldNotify(newAppointments) {
-        const lastAvailable = this.availableStore.getLastAvailable()
-            .then((lastAvailable) => {
-                return lastAvailable;
-            })
-            .catch((err) => {
-                console.log(err);
-            });
+    async shouldNotify(newAppointments) {
+        let lastAvailable = await this.availableStore.getLastAvailable();
 
         if(lastAvailable === newAppointments) {
             return false;
