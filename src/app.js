@@ -1,12 +1,12 @@
-import {MellyFinder} from "./mellyFinder.js";
+import {Scraper} from "./scraper.js";
 import dotenv from 'dotenv';
 
 dotenv.config();
 import {AvailableStore} from "./store/availableStore.js";
-import {TelegramBot} from "./notification/TelegramBot.js";
+import {TelegramBot} from "./notification/telegramBot.js";
 import {IntervalManager} from "./intervalManager.js";
 
-const mellyFinder = new MellyFinder();
+const mellyFinder = new Scraper();
 const availableStore = new AvailableStore();
 
 
@@ -35,8 +35,15 @@ const fetchAppointments = async () => {
         await bot.sendMessage(bot.formatBookings(available));
     }
     await availableStore.setLastAvailable(available);
-
     totalIntervalCount++;
+
+    bot.setStats({
+        status: intervalManager.getStatus(),
+        totalChecks: totalIntervalCount,
+        month: getMonth(),
+        intervalTime:intervalManager.getIntervalTime()
+    });
+
 }
 
 const intervalManager = new IntervalManager(fetchAppointments, intervalTime);
@@ -66,5 +73,5 @@ await init()
     .catch(async (err) => {
         console.log(err);
         await bot.sendMessage(`There was an error fetching booking dates and the app has quit running. Error :${err}`);
-        stop();
+        intervalManager.stop();
     });

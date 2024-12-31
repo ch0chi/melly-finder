@@ -3,7 +3,7 @@ import axios from "axios";
 import {Store} from "./store/store.js";
 import {ApiService} from "./apiService.js";
 
-export class MellyFinder {
+export class Scraper {
     url = 'https://melanzana.com/wp-admin/admin-ajax.php';
     store;
     nonce;

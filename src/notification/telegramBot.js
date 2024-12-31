@@ -44,8 +44,8 @@ export class TelegramBot {
                 "/stop - Stop the bot\n" +
                 "/appointments - Check the available appointments\n" +
                 "/stats - Get the current scraper statistics\n" +
-                "/changeMonth [month YYYY-MM] - Change the month to check for appointments. Example: /changeMonth 2025-09\n" +
-                "/changeInterval [minutes] - Change the interval to check for appointments. Example: /changeInterval 5";
+                "/change-month [month YYYY-MM] - Change the month to check for appointments. Example: /changeMonth 2025-09\n" +
+                "/change-interval [minutes] - Change the interval to check for appointments. Example: /changeInterval 5";
             await ctx.reply(msg);
         });
 
@@ -77,7 +77,7 @@ export class TelegramBot {
             }
         });
 
-        this.bot.command('changeInterval', async (ctx) => {
+        this.bot.command('change-interval', async (ctx) => {
             let interval = ctx.message.text.split(' ')[1];
             if (interval) {
                 this.intervalManager.setIntervalTime(parseInt(interval));
@@ -106,8 +106,11 @@ export class TelegramBot {
             await ctx.reply(`Current Stats:\n${msg}`);
         });
 
-        this.bot.command('changeMonth', async(ctx) => {
+        this.bot.command('change-month', async(ctx) => {
             let month = ctx.message.text.split(' ')[1];
+            month = month.match(/\d{4}-\d{2}/);
+            month = month ? month[0] : null;
+
             if(month) {
                 process.env.MONTH = month;
                 let currentStats = this.getStats();
@@ -118,7 +121,7 @@ export class TelegramBot {
                     "You can always check the available appointments by typing /appointments";
                 await ctx.reply(msg);
             } else {
-                await ctx.reply("Please enter a valid month");
+                await ctx.reply("Please enter a valid month in the format of YYYY-MM");
             }
         });
     }
