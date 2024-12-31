@@ -8,11 +8,13 @@ export class TelegramBot {
     chatId;
     availableStore;
     stats = {};
+    intervalManager;
 
-    constructor() {
+    constructor(intervalManager) {
         this.bot = new Bot(process.env.TELEGRAM_BOT_TOKEN);
         this.chatId = process.env.TELEGRAM_CHAT_ID;
         this.availableStore = new AvailableStore();
+        this.intervalManager = intervalManager;
     }
 
     async init() {
@@ -34,11 +36,40 @@ export class TelegramBot {
     }
 
     commands(){
+
+        this.bot.command('help', async(ctx) => {
+            let msg = "Available commands:\n" +
+                "/help - Show this message\n" +
+                "/start - Restart the bot\n" +
+                "/stop - Stop the bot\n" +
+                "/appointments - Check the available appointments\n" +
+                "/stats - Get the current scraper statistics\n" +
+                "/changeMonth [month YYYY-MM] - Change the month to check for appointments. Example: /changeMonth 2025-09\n" +
+                "/changeInterval [minutes] - Change the interval to check for appointments. Example: /changeInterval 5";
+            await ctx.reply(msg);
+        });
+
+        this.bot.command('start', async(ctx) => {
+            this.intervalManager.start();
+            let stats = this.getStats();
+            stats.status = this.intervalManager.getStatus();
+            this.setStats(stats);
+            await ctx.reply('Started Melly Finder!');
+        });
+
+        this.bot.command('stop', async(ctx) => {
+            this.intervalManager.stop();
+            let stats = this.getStats();
+            stats.status = this.intervalManager.getStatus();
+            this.setStats(stats);
+            await ctx.reply('Stopped Melly Finder! You can start it again by typing /start');
+        });
+
         this.bot.command('appointments', async(ctx) => {
             let lastAvailable = await this.availableStore.getLastAvailable();
             let msg = "";
             if(lastAvailable.length > 0) {
-                msg = `Here are all the available appointments from the last check:\n${this.formatMsg(lastAvailable)}`;
+                msg = `Here are all the available appointments from the last check:\n${this.formatBookings(lastAvailable)}`;
                 await ctx.reply(msg);
             } else {
                 await ctx.reply("No available appointments found. " +
@@ -46,12 +77,32 @@ export class TelegramBot {
             }
         });
 
+        this.bot.command('changeInterval', async (ctx) => {
+            let interval = ctx.message.text.split(' ')[1];
+            if (interval) {
+                this.intervalManager.setIntervalTime(parseInt(interval));
+                let stats = this.getStats();
+                stats.status = this.intervalManager.getStatus();
+                stats.intervalTime = this.intervalManager.getIntervalTime();
+                this.setStats(stats);
+                await ctx.reply(`Interval set to ${interval} minutes.`);
+            } else {
+                await ctx.reply("Please enter a valid interval");
+            }
+        });
+
         this.bot.command('stats', async(ctx) => {
             let stats = this.getStats();
             let msg = "";
-            for(let key in stats) {
-                msg += `${key}: ${stats[key]}\n`;
+            if(Object.keys(stats).length !== 0) {
+                for(let key in stats) {
+                    msg += `${key}: ${stats[key]}\n`;
+                }
+            } else {
+                msg = "Starting up...";
             }
+
+
             await ctx.reply(`Current Stats:\n${msg}`);
         });
 
@@ -79,7 +130,12 @@ export class TelegramBot {
             });
     }
 
-    formatMsg(bookings) {
+    async sendError(error) {
+        let msg = "An error occurred:\n```" + error + "```";
+        await this.sendMessage(msg);
+    }
+
+    formatBookings(bookings) {
         let msg = "";
         for(const booking of bookings) {
             msg += `${booking}\n`;
