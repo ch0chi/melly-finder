@@ -44,8 +44,8 @@ export class TelegramBot {
                 "/stop - Stop the bot\n" +
                 "/appointments - Check the available appointments\n" +
                 "/stats - Get the current scraper statistics\n" +
-                "/changemonth [month YYYY-MM] - Change the month to check for appointments. Example: /changeMonth 2025-09\n" +
-                "/changeinterval [minutes] - Change the interval to check for appointments. Example: /changeInterval 5";
+                "/changemonth [month YYYY-MM] - Change the month to check for appointments. Example: /changemonth 2025-09\n" +
+                "/changeinterval [minutes] - Change the interval to check for appointments. Example: /changeinterval 5";
             await ctx.reply(msg);
         });
 
@@ -135,7 +135,7 @@ export class TelegramBot {
 
     async sendError(error) {
         let msg = "An error occurred:\n```" + error + "```";
-        await this.sendMessage(msg);
+        await this.sendMessage(msg,{parse_mode:"MarkdownV2"});
     }
 
     formatBookings(bookings) {
