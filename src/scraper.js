@@ -133,6 +133,25 @@ export class Scraper {
         return available;
     }
 
+    async getAppointmentsByDate(date) {
+        let dailySlots = await this.fetchDailySlots(date);
+        const $ = cheerio.load(dailySlots);
+        const timeSlotElem = $('.timeslot.bookedClearFix');
+        if(timeSlotElem.length === 0){
+            return 'There are no appointment time slots available for this day.';
+        }
+        let timeSlots = [];
+
+        $(timeSlotElem).each((i, elem) => {
+            const timeRange = $(elem).find('.timeslot-range').text().trim();
+            const spotsText = $(elem).find('.spots-available').first().text().trim();
+            let slot = `${timeRange} | ${spotsText}`;
+            timeSlots.push(slot);
+        });
+
+        return timeSlots;
+    }
+
     async checkIfAppointmentHasTimeSlot(appointment) {
         let dailySlots = await this.fetchDailySlots(appointment.date);
         const $ = cheerio.load(dailySlots);

@@ -2,6 +2,7 @@ import { Bot } from "grammy";
 import {AvailableStore} from "../store/availableStore.js";
 import dotenv from 'dotenv';
 dotenv.config();
+import {Scraper} from "../scraper.js";
 
 export class TelegramBot {
     bot;
@@ -45,7 +46,8 @@ export class TelegramBot {
                 "/appointments - Check the available appointments\n" +
                 "/stats - Get the current scraper statistics\n" +
                 "/changemonth [month YYYY-MM] - Change the month to check for appointments. Example: /changemonth 2025-09\n" +
-                "/changeinterval [minutes] - Change the interval to check for appointments. Example: /changeinterval 5";
+                "/changeinterval [minutes] - Change the interval to check for appointments. Example: /changeinterval 5\n" +
+                "/checkdate [day YYYY-MM-DD] - Check if a specific date has appointments."
             await ctx.reply(msg);
         });
 
@@ -124,6 +126,19 @@ export class TelegramBot {
                 await ctx.reply("Please enter a valid month in the format of YYYY-MM");
             }
         });
+
+        this.bot.command('checkdate', async(ctx) => {
+            let date = ctx.message.text.split(' ')[1];
+            //check if date in the format of YYYY-MM-DD or YYYY-MM-D
+            if (date && date.match(/^\d{4}-\d{2}-\d{2}$/) || date.match(/^\d{4}-\d{2}-\d{1}$/)) {
+                let scraper = new Scraper();
+                let appointments = await scraper.getAppointmentsByDate(date);
+                await ctx.reply(this.formatBookings(appointments));
+            } else {
+                await ctx.reply("Please enter a valid date in the format of YYYY-MM-DD or YYYY-MM-D");
+            }
+
+        })
     }
 
     async sendMessage(msg) {
@@ -140,9 +155,16 @@ export class TelegramBot {
 
     formatBookings(bookings) {
         let msg = "";
-        for(const booking of bookings) {
-            msg += `${booking}\n`;
+
+        if(Array.isArray(bookings)) {
+            for(const booking of bookings) {
+                msg += `${booking}\n`;
+            }
+
+        } else {
+            msg = bookings;
         }
+
         return msg;
     }
 
