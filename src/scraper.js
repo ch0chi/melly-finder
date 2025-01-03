@@ -138,18 +138,48 @@ export class Scraper {
         const $ = cheerio.load(dailySlots);
         const timeSlotElem = $('.timeslot.bookedClearFix');
         if(timeSlotElem.length === 0){
-            return 'There are no appointment time slots available for this day.';
+            return {day:date,slots:null};
         }
-        let timeSlots = [];
 
+        let timeSlots = [];
         $(timeSlotElem).each((i, elem) => {
             const timeRange = $(elem).find('.timeslot-range').text().trim();
-            const spotsText = $(elem).find('.spots-available').first().text().trim();
-            let slot = `${timeRange} | ${spotsText}`;
-            timeSlots.push(slot);
+            const slotsText = $(elem).find('.spots-available').first().text().trim();
+            let slots = `${timeRange} | ${slotsText}`;
+            timeSlots.push(slots);
         });
 
-        return timeSlots;
+        return {day:date,slots:timeSlots};
+
+    }
+
+    getEveryDayOfMonth(year, month) {
+        year = parseInt(year);
+        month = parseInt(month) - 1;
+        let days = [];
+        let date = new Date(year, month, 1);
+        while (date.getMonth() === month) {
+            days.push(`${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`);
+            date.setDate(date.getDate() + 1);
+        }
+        return days;
+    }
+
+    async getDailyAppointmentsForMonth(year, month) {
+        const days = this.getEveryDayOfMonth(year, month);
+        const chunkSize = 5;
+        let appointments = [];
+        for (let i = 0; i < days.length; i += chunkSize) {
+            const chunk = days.slice(i, i + chunkSize);
+            const appointmentPromises = chunk.map(day => this.getAppointmentsByDate(day));
+            const chunkAppointments = await Promise.all(appointmentPromises);
+            const availableTimeSlots = chunkAppointments.filter((timeSlots) => {
+               return timeSlots.slots !== null;
+            });
+            appointments = appointments.concat(availableTimeSlots);
+        }
+
+        return appointments;
     }
 
     async checkIfAppointmentHasTimeSlot(appointment) {

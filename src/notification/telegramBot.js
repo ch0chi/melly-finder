@@ -47,7 +47,8 @@ export class TelegramBot {
                 "/stats - Get the current scraper statistics\n" +
                 "/changemonth [month YYYY-MM] - Change the month to check for appointments. Example: /changemonth 2025-09\n" +
                 "/changeinterval [minutes] - Change the interval to check for appointments. Example: /changeinterval 5\n" +
-                "/checkdate [day YYYY-MM-DD] - Check if a specific date has appointments."
+                "/checkdate [day YYYY-MM-DD] - Check if a specific date has appointments. Example: /checkdate 2025-01-26\n" +
+                "/checkmonth [month YYYY-M] - Checks for both public and hidden appointments. Example: /checkmonth 2025-1";
             await ctx.reply(msg);
         });
 
@@ -133,12 +134,34 @@ export class TelegramBot {
             if (date && date.match(/^\d{4}-\d{2}-\d{2}$/) || date.match(/^\d{4}-\d{2}-\d{1}$/)) {
                 let scraper = new Scraper();
                 let appointments = await scraper.getAppointmentsByDate(date);
+                if(appointments.slots === null) {
+                    await ctx.reply(`No available appointments for ${date}`);
+                }
                 await ctx.reply(this.formatBookings(appointments));
             } else {
                 await ctx.reply("Please enter a valid date in the format of YYYY-MM-DD or YYYY-MM-D");
             }
+        });
 
-        })
+        this.bot.command('checkmonth', async(ctx) => {
+            let date = ctx.message.text.split(' ')[1];
+            if(date && date.match(/^\d{4}-\d{2}$/) || date.match(/^\d{4}-\d$/)) {
+                let scraper = new Scraper();
+                date = date.split('-');
+                let year = date[0];
+                let month = date[1];
+                let appointments = await scraper.getDailyAppointmentsForMonth(year,month);
+                let msg = "No available appointments found.";
+                if(appointments.length > 0) {
+                    msg = this.formatDailyBookings(appointments);
+                }
+
+                await ctx.reply(msg);
+            } else {
+                await ctx.reply("Please enter a valid date in the format of YYYY-MM or YYYY-M");
+            }
+
+        });
     }
 
     async sendMessage(msg) {
@@ -166,6 +189,23 @@ export class TelegramBot {
         }
 
         return msg;
+    }
+
+    formatDailyBookings(bookings) {
+        let msg = "";
+        for(const booking of bookings) {
+            let slots = booking.slots;
+            if(booking.slots.length > 1 ) {
+                slots = booking.slots.map((slot,idx) => {
+                    if(idx > 0) {
+                        return ' ' + slot;
+                    }
+                    return slot;
+                });
+            }
+            msg += `${booking.day}\n${slots}\n`;
+        }
+        return msg
     }
 
     async shouldNotify(newAppointments) {
