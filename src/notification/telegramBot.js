@@ -164,15 +164,15 @@ export class TelegramBot {
         });
     }
 
-    async sendMessage(msg) {
-        await this.bot.api.sendMessage(this.chatId,msg)
+    async sendMessage(msg,options = {}) {
+        await this.bot.api.sendMessage(this.chatId,msg,options)
             .catch((err) => {
                 console.log(err);
             });
     }
 
     async sendError(error) {
-        let msg = "An error occurred:\n```" + error + "```";
+        let msg = "An error occurred:\n```\n" + error + "```";
         await this.sendMessage(msg,{parse_mode:"MarkdownV2"});
     }
 
