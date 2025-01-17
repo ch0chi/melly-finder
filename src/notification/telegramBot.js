@@ -137,7 +137,7 @@ export class TelegramBot {
                 if(appointments.slots === null) {
                     await ctx.reply(`No available appointments for ${date}`);
                 }
-                await ctx.reply(this.formatBookings(appointments));
+                await ctx.reply(this.formatDailyBookings([appointments]));
             } else {
                 await ctx.reply("Please enter a valid date in the format of YYYY-MM-DD or YYYY-MM-D");
             }
