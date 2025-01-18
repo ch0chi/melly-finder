@@ -1,4 +1,4 @@
-import { Bot } from "grammy";
+import {Bot, GrammyError, HttpError} from "grammy";
 import {AvailableStore} from "../store/availableStore.js";
 import dotenv from 'dotenv';
 dotenv.config();
@@ -20,10 +20,21 @@ export class TelegramBot {
 
     async init() {
         console.log("Starting Telegram Bot...");
-        this.bot.start()
-            .catch((err) => {
-                console.log(err);
-            });
+        this.bot.start() .catch((err) => {
+            console.log(err);
+        });
+        this.bot.catch((err) => {
+            const ctx = err.ctx;
+            console.error(`Error while handling update ${ctx.update.update_id}:`);
+            const e = err;
+            if (e instanceof GrammyError) {
+                console.error("Error in request:", e.description);
+            } else if (e instanceof HttpError) {
+                console.error("Could not contact Telegram:", e);
+            } else {
+                console.error("Unknown error:", e);
+            }
+        });
 
         this.commands();
     }
@@ -131,13 +142,14 @@ export class TelegramBot {
         this.bot.command('checkdate', async(ctx) => {
             let date = ctx.message.text.split(' ')[1];
             //check if date in the format of YYYY-MM-DD or YYYY-MM-D
-            if (date && date.match(/^\d{4}-\d{2}-\d{2}$/) || date.match(/^\d{4}-\d{2}-\d{1}$/)) {
+            if (date && date.match(/^\d{4}-(0?[1-9]|1[0-2])-(0?[1-9]|[12]\d|3[01])$/)) {
                 let scraper = new Scraper();
                 let appointments = await scraper.getAppointmentsByDate(date);
-                if(appointments.slots === null) {
+                if(appointments.slots !== null) {
+                    await ctx.reply(this.formatDailyBookings([appointments]));
+                } else {
                     await ctx.reply(`No available appointments for ${date}`);
                 }
-                await ctx.reply(this.formatDailyBookings([appointments]));
             } else {
                 await ctx.reply("Please enter a valid date in the format of YYYY-MM-DD or YYYY-MM-D");
             }
@@ -145,7 +157,7 @@ export class TelegramBot {
 
         this.bot.command('checkmonth', async(ctx) => {
             let date = ctx.message.text.split(' ')[1];
-            if(date && date.match(/^\d{4}-\d{2}$/) || date.match(/^\d{4}-\d$/)) {
+            if(date && date.match(/^\d{4}-(0?[1-9]|1[0-2])$/)) {
                 let scraper = new Scraper();
                 date = date.split('-');
                 let year = date[0];
@@ -195,6 +207,9 @@ export class TelegramBot {
         let msg = "";
         for(const booking of bookings) {
             let slots = booking.slots;
+            if(slots === null) {//todo is this still needed?
+                continue;
+            }
             if(booking.slots.length > 1 ) {
                 slots = booking.slots.map((slot,idx) => {
                     if(idx > 0) {
@@ -203,7 +218,7 @@ export class TelegramBot {
                     return slot;
                 });
             }
-            msg += `${booking.day}\n${slots}\n`;
+            msg += `\n${booking.day}\n${slots}\n`;
         }
         return msg
     }
