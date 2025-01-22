@@ -60,7 +60,7 @@ export class TelegramBot {
                 "/changeinterval [minutes] - Change the interval to check for appointments. Example: /changeinterval 5\n" +
                 "/checkdate [day YYYY-MM-DD] - Check if a specific date has appointments. Example: /checkdate 2025-01-26\n" +
                 "/checkmonth [month YYYY-M] - Checks for both public and hidden appointments. Example: /checkmonth 2025-1";
-            await ctx.reply(msg);
+            await this.reply(ctx,msg);
         });
 
         this.bot.command('start', async(ctx) => {
@@ -68,7 +68,7 @@ export class TelegramBot {
             let stats = this.getStats();
             stats.status = this.intervalManager.getStatus();
             this.setStats(stats);
-            await ctx.reply('Started Melly Finder!');
+            await this.reply(ctx,'Started Melly Finder!');
         });
 
         this.bot.command('stop', async(ctx) => {
@@ -76,7 +76,7 @@ export class TelegramBot {
             let stats = this.getStats();
             stats.status = this.intervalManager.getStatus();
             this.setStats(stats);
-            await ctx.reply('Stopped Melly Finder! You can start it again by typing /start');
+            await this.reply(ctx,'Stopped Melly Finder! You can start it again by typing /start');
         });
 
         this.bot.command('appointments', async(ctx) => {
@@ -84,9 +84,9 @@ export class TelegramBot {
             let msg = "";
             if(lastAvailable.length > 0) {
                 msg = `Here are all the available appointments from the last check:\n${this.formatBookings(lastAvailable)}`;
-                await ctx.reply(msg);
+                await this.reply(ctx,msg);
             } else {
-                await ctx.reply("No available appointments found. " +
+                await this.reply(ctx,"No available appointments found. " +
                     "I'll let you know as soon as I find something.");
             }
         });
@@ -99,9 +99,9 @@ export class TelegramBot {
                 stats.status = this.intervalManager.getStatus();
                 stats.intervalTime = this.intervalManager.getIntervalTime();
                 this.setStats(stats);
-                await ctx.reply(`Interval set to ${interval} minutes.`);
+                await this.reply(ctx,`Interval set to ${interval} minutes.`);
             } else {
-                await ctx.reply("Please enter a valid interval");
+                await this.reply(ctx,"Please enter a valid interval");
             }
         });
 
@@ -117,7 +117,7 @@ export class TelegramBot {
             }
 
 
-            await ctx.reply(`Current Stats:\n${msg}`);
+            await this.reply(ctx,`Current Stats:\n${msg}`);
         });
 
         this.bot.command('changemonth', async(ctx) => {
@@ -133,9 +133,9 @@ export class TelegramBot {
                 await this.availableStore.setLastAvailable([]);
                 let msg = "Month set to " + month + "." + " I'll start checking for appointments for that month, and I will notify you if I find any.\n\n" +
                     "You can always check the available appointments by typing /appointments";
-                await ctx.reply(msg);
+                await this.reply(ctx,msg);
             } else {
-                await ctx.reply("Please enter a valid month in the format of YYYY-MM");
+                await this.reply(ctx,"Please enter a valid month in the format of YYYY-MM");
             }
         });
 
@@ -146,12 +146,12 @@ export class TelegramBot {
                 let scraper = new Scraper();
                 let appointments = await scraper.getAppointmentsByDate(date);
                 if(appointments.slots !== null) {
-                    await ctx.reply(this.formatDailyBookings([appointments]));
+                    await this.reply(ctx,this.formatDailyBookings([appointments]));
                 } else {
-                    await ctx.reply(`No available appointments for ${date}`);
+                    await this.reply(ctx,`No available appointments for ${date}`);
                 }
             } else {
-                await ctx.reply("Please enter a valid date in the format of YYYY-MM-DD or YYYY-MM-D");
+                await this.reply(ctx,"Please enter a valid date in the format of YYYY-MM-DD or YYYY-MM-D");
             }
         });
 
@@ -168,9 +168,9 @@ export class TelegramBot {
                     msg = this.formatDailyBookings(appointments);
                 }
 
-                await ctx.reply(msg);
+                await this.reply(ctx,msg);
             } else {
-                await ctx.reply("Please enter a valid date in the format of YYYY-MM or YYYY-M");
+                await this.reply(ctx,"Please enter a valid date in the format of YYYY-MM or YYYY-M");
             }
 
         });
@@ -183,10 +183,29 @@ export class TelegramBot {
             });
     }
 
+    async reply(ctx,msg) {
+        if(msg.length > 4096) {
+            let chunks = this.chunkLongMsg(msg,4096);
+            for(const parts of chunks) {
+                await ctx.reply(parts);
+            }
+        } else {
+            await ctx.reply(msg);
+        }
+    }
+
+    chunkLongMsg (str, size) {
+        return Array.from({ length: Math.ceil(str.length / size) }, (v, i) =>
+            str.slice(i * size, i * size + size))
+    }
+
+
     async sendError(error) {
         let msg = "An error occurred:\n```\n" + error + "```";
         await this.sendMessage(msg,{parse_mode:"MarkdownV2"});
     }
+
+
 
     formatBookings(bookings) {
         let msg = "";
