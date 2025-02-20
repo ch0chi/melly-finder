@@ -158,6 +158,13 @@ export class Scraper {
         month = parseInt(month) - 1;
         let days = [];
         let date = new Date(year, month, 1);
+        let now = new Date(Date.now());
+
+        //check if given month is current month. If it is, set date to current date
+        //to avoid fetching past dates.
+        if(now.getMonth() === date.getMonth()){
+            date.setMonth(now.getMonth());
+        }
         while (date.getMonth() === month) {
             days.push(`${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`);
             date.setDate(date.getDate() + 1);
