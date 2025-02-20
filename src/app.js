@@ -16,7 +16,8 @@ let totalIntervalCount = 0;
 
 const getMonth = () => {
     let month = process.env.MONTH;
-    if (!month) {
+    let now = new Date(Date.now());
+    if (!month || now.getMonth() + 1 !== month) {
         const date = new Date();
         return `${date.getFullYear()}-${date.getMonth() + 1}-01`;
     }

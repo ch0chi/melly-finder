@@ -163,7 +163,7 @@ export class Scraper {
         //check if given month is current month. If it is, set date to current date
         //to avoid fetching past dates.
         if(now.getMonth() === date.getMonth()){
-            date.setMonth(now.getMonth());
+            date.setDate(now.getDate());
         }
         while (date.getMonth() === month) {
             days.push(`${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`);
