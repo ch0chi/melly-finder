@@ -6,6 +6,6 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./cache:/usr/app/cache/
-    network_mode: "host"
+    network_mode: "container:wireguard"
     env_file: '.env'
     command: "npm start"
