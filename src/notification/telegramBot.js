@@ -212,7 +212,7 @@ export class TelegramBot {
 
         if(Array.isArray(bookings)) {
             for(const booking of bookings) {
-                msg += `${booking}\n`;
+                msg += `${booking.date}\n`;
             }
 
         } else {

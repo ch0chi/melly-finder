@@ -85,12 +85,15 @@ export class Scraper {
         for (let i = 0; i < rows.length; i++) {
             let cols = $(rows[i]).find('.bc-col');
             for (let j = 0; j < cols.length; j++) {
-                let date = $(cols[j]).attr('data-date');
-                let available = $(cols[j]).find('.date').attr('title') ?? null;
-                appointments.push({ date: date, slots: available });
+                let isBooked = $(cols[j]).hasClass('booked');
+                let isPrevDate = $(cols[j]).hasClass('prev-date');
+                if(!isBooked && !isPrevDate) {
+                    let date = $(cols[j]).attr('data-date');
+                    appointments.push({ date: date});
+                }
             }
         }
-        return await this.getAvailableAppointments(appointments);
+        return appointments;
     }
 
     async fetchDailySlots(date) {
@@ -111,26 +114,6 @@ export class Scraper {
             console.log(this.apiService.errorMessage(err));
             return { error: 'Error fetching daily slots', message: this.apiService.errorMessage(err) };
         }
-    }
-
-    async getAvailableAppointments(appointments) {
-        let available = [];
-        for (const appointment of appointments) {
-            if(appointment.slots) {
-                let slots= appointment.slots.trim();
-                let slotsArr = slots.split(' ');
-                let numOfSlots = +slotsArr[0];
-                if(numOfSlots === 1) {
-                    let hasTimeSlot = await this.checkIfAppointmentHasTimeSlot(appointment);
-                    if(hasTimeSlot) {
-                        available.push(`${appointment.date} - ${appointment.slots}`);
-                    }
-                } else{
-                    available.push(`${appointment.date} - ${appointment.slots}`);
-                }
-            }
-        }
-        return available;
     }
 
     async getAppointmentsByDate(date) {
