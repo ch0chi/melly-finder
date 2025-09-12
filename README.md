@@ -1,6 +1,6 @@
 # Melly Finder
 
-A Node.js application that monitors and finds Melly availability, sending notifications via Telegram when matches are found.
+A Node.js application that monitors and finds Melly (🍆👕) availability, sending notifications via Telegram when matches are found.
 
 ## Prerequisites
 
@@ -19,6 +19,11 @@ A Node.js application that monitors and finds Melly availability, sending notifi
 6. *Optional* Disable the bot from joining new groups via botfather using `/setjoingroups`
 7. Get the [chat id for the channel](https://gist.github.com/nafiesl/4ad622f344cd1dc3bb1ecbe468ff9f8a#get-chat-id-for-a-channel) and add the chat id to the .env file.
 8. Update the fetch interval and month in the .env file to the desired values.
+
+# Docker Compose Config
+The current docker-compose file has the `network_mode` parameter set to proxy through a wireguard vpn. If you're using
+a wireguard proxy container, you can keep this as it is. However, if you want to run the application withou a vpn proxy,
+setting the value to `host` will work.
 
 
 ## Running the App
